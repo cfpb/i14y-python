@@ -1,7 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import requests
-
 try:
     from bs4 import BeautifulSoup
 except ImportError:  # pragma nocover
@@ -9,10 +7,9 @@ except ImportError:  # pragma nocover
 
 
 class Mulcher(object):
-    """Object that fetches a URL and prepares its content for the i14y API.
+    """Object that mulches HTML into content for the i14y API.
 
-    Uses the requests library to retrive content and the Beautiful Soup 4
-    library to parse that content.
+    Uses the Beautiful Soup 4 library to parse HTML.
 
     Uses the <title> tag for the document title.
 
@@ -28,21 +25,21 @@ class Mulcher(object):
                 " (try 'pip install bs4')"
             ))
 
-    def mulch(self, url):
-        response = requests.get(url).text
-        soup = BeautifulSoup(response, 'html.parser')
+    def mulch(self, html):
+        soup = BeautifulSoup(html, 'html.parser')
 
-        mulched = {
-            'path': url,
-            'title': soup.title.string.strip(),
-        }
+        mulched = {}
+
+        title = soup.title.string.strip()
+        if title:
+            mulched['title'] = title
 
         description = soup.find('meta', attrs={'name': 'description'})
-        if description:
+        if description and description.get('content'):
             mulched['description'] = description.get('content')
 
         content = soup.find('main')
-        if content:
+        if content and content.text:
             mulched['content'] = content.text
 
         return mulched

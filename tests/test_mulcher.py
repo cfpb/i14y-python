@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
+from __future__ import absolute_import, unicode_literals
+
 from unittest import TestCase
 
 from mock import patch
-import responses
 
 from i14y.indexer import Mulcher
 
@@ -12,7 +14,6 @@ class MulcherTests(TestCase):
             with self.assertRaises(RuntimeError):
                 Mulcher()
 
-    @responses.activate
     def test_mulch_using_requests(self):
         content = (
             '<html><head>'
@@ -20,20 +21,17 @@ class MulcherTests(TestCase):
             '<meta name="description" content="My description">'
             '</head><body>'
             '<header>Header</header>'
-            '<main>Main content</main>'
+            '<main>Main contënt</main>'
             '<footer>Footer</footer>'
             '</body></html>'
         )
 
-        responses.add(responses.GET, 'https://some.url', body=content)
-        self.assertEqual(Mulcher().mulch('https://some.url'), {
-            'path': 'https://some.url',
+        self.assertEqual(Mulcher().mulch(content), {
             'title': 'My title',
             'description': 'My description',
-            'content': 'Main content',
+            'content': 'Main contënt',
         })
 
-    @responses.activate
     def test_content_has_no_description(self):
         content = (
             '<html><head><title>My title</title></head><body>'
@@ -43,14 +41,11 @@ class MulcherTests(TestCase):
             '</body></html>'
         )
 
-        responses.add(responses.GET, 'https://some.url', body=content)
-        self.assertEqual(Mulcher().mulch('https://some.url'), {
-            'path': 'https://some.url',
+        self.assertEqual(Mulcher().mulch(content), {
             'title': 'My title',
             'content': 'Main content',
         })
 
-    @responses.activate
     def test_content_has_no_main(self):
         content = (
             '<html><head>'
@@ -62,9 +57,7 @@ class MulcherTests(TestCase):
             '</body></html>'
         )
 
-        responses.add(responses.GET, 'https://some.url', body=content)
-        self.assertEqual(Mulcher().mulch('https://some.url'), {
-            'path': 'https://some.url',
+        self.assertEqual(Mulcher().mulch(content), {
             'title': 'My title',
             'description': 'My description',
         })

@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-from mock import Mock
 from unittest import TestCase
+
+from mock import Mock
 
 from i14y.error import InvalidRequestError
 from i14y.indexer import Indexer, url_to_document_id
@@ -16,49 +17,59 @@ class UrlToDocumentIdTests(TestCase):
         )
 
 
+class MockFetcher(object):
+    def fetch(self, url):
+        return (
+            '<html><head>'
+            '<title>My title</title>'
+            '<meta name="description" content="My description">'
+            '</head><body>'
+            '<header>Header</header>'
+            '<main>Main contënt</main>'
+            '<footer>Footer</footer>'
+            '</body></html>'
+        )
+
+
 class IndexerTests(TestCase):
     def setUp(self):
         self.url = 'https://domain.url/foo/bar?x=y'
+        self.fetcher = MockFetcher()
         self.drawer = Mock()
-        self.mulcher = Mock(mulch=Mock(return_value={
-            'path': self.url,
-            'title': 'My title',
-            'content': 'My content',
-        }))
 
     def test_create_document(self):
-        indexer = Indexer(drawer=self.drawer, mulcher=self.mulcher)
+        indexer = Indexer(drawer=self.drawer, fetcher=self.fetcher)
         indexer.create_document(self.url)
 
-        self.mulcher.mulch.assert_called_once_with(self.url)
         self.drawer.create_document.assert_called_once_with(
             document_id='https___domain.url_foo_bar?x=y',
             path=self.url,
             title='My title',
-            content='My content'
+            description='My description',
+            content='Main contënt'
         )
 
     def test_update_document(self):
-        indexer = Indexer(drawer=self.drawer, mulcher=self.mulcher)
+        indexer = Indexer(drawer=self.drawer, fetcher=self.fetcher)
         indexer.update_document(self.url)
 
-        self.mulcher.mulch.assert_called_once_with(self.url)
         self.drawer.update_document.assert_called_once_with(
             document_id='https___domain.url_foo_bar?x=y',
             path=self.url,
             title='My title',
-            content='My content'
+            description='My description',
+            content='Main contënt'
         )
 
     def test_update_or_create_document_already_exists(self):
-        indexer = Indexer(drawer=self.drawer, mulcher=self.mulcher)
+        indexer = Indexer(drawer=self.drawer, fetcher=self.fetcher)
         indexer.update_or_create_document(self.url)
         self.drawer.update_document.assert_called_once()
         self.drawer.create_document.assert_not_called()
 
     def test_update_or_create_document_does_not_exist(self):
         self.drawer.update_document.side_effect = InvalidRequestError('error')
-        indexer = Indexer(drawer=self.drawer, mulcher=self.mulcher)
+        indexer = Indexer(drawer=self.drawer, fetcher=self.fetcher)
         indexer.update_or_create_document(self.url)
         self.drawer.update_document.assert_called_once()
         self.drawer.create_document.assert_called_once()
