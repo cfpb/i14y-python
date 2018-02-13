@@ -30,6 +30,9 @@ delete - delete the existing document for a URL"""
     ))
     parser.add_argument('action', help='action to take on a URL')
     parser.add_argument('url', help='full absolute URL')
+    parser.add_argument('--html', type=argparse.FileType('r'), help=(
+        'file containing HTML content for the specified URL'
+    ))
 
     args = parser.parse_args()
 
@@ -51,18 +54,17 @@ delete - delete the existing document for a URL"""
 
     indexer = Indexer(drawer_handle=drawer_handle, secret_token=secret_token)
 
-    handlers = {
-        'create': indexer.create_document,
-        'update': indexer.update_document,
-        'update_or_create': indexer.update_or_create_document,
-        'delete': indexer.delete_document,
-    }
-
-    if args.action not in handlers.keys():
+    if args.action == 'create':
+        indexer.create_document(args.url, html_file=args.html)
+    elif args.action == 'update':
+        indexer.update_document(args.url, html_file=args.html)
+    elif args.action == 'update_or_create':
+        indexer.update_or_create_document(args.url, html_file=args.html)
+    elif args.action == 'delete':
+        indexer.delete_document(args.url)
+    else:
         parser.error('Unsupported action: %s' % args.action)
         return 1
-
-    handlers[args.action](args.url)
 
 
 if __name__ == '__main__':

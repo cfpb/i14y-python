@@ -33,24 +33,26 @@ class Indexer(object):
         self.mulcher = mulcher or Mulcher()
         self.document_id_fn = document_id_fn or url_to_document_id
 
-    def create_document(self, url):
-        html = self.fetcher.fetch(url)
+    def create_document(self, url, html_file=None):
+        html = self._get_html(url, html_file=html_file)
+
         self.drawer.create_document(
             document_id=self.document_id_fn(url),
             path=url,
             **self.mulcher.mulch(html)
         )
 
-    def update_document(self, url):
-        html = self.fetcher.fetch(url)
+    def update_document(self, url, html_file=None):
+        html = self._get_html(url, html_file=html_file)
+
         self.drawer.update_document(
             document_id=self.document_id_fn(url),
             path=url,
             **self.mulcher.mulch(html)
         )
 
-    def update_or_create_document(self, url):
-        html = self.fetcher.fetch(url)
+    def update_or_create_document(self, url, html_file=None):
+        html = self._get_html(url, html_file=html_file)
         mulched = self.mulcher.mulch(html)
         document_id = self.document_id_fn(url)
 
@@ -70,3 +72,9 @@ class Indexer(object):
     def delete_document(self, url):
         document_id = self.document_id_fn(url)
         self.drawer.delete_document(document_id=document_id)
+
+    def _get_html(self, url, html_file=None):
+        if html_file:
+            return html_file.read()
+
+        return self.fetcher.fetch(url)

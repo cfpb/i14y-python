@@ -4,6 +4,7 @@ from __future__ import absolute_import, unicode_literals
 from unittest import TestCase
 
 from mock import Mock
+from six import StringIO
 
 from i14y.error import InvalidRequestError
 from i14y.indexer import Indexer, url_to_document_id
@@ -47,6 +48,22 @@ class IndexerTests(TestCase):
             title='My title',
             description='My description',
             content='Main contënt'
+        )
+
+    def test_create_document_with_html_file(self):
+        html_file = StringIO(
+            '<html><head><title>Title in file</title></head>'
+            '<body><main>Content in file</main></body></html>'
+        )
+
+        indexer = Indexer(drawer=self.drawer, fetcher=self.fetcher)
+        indexer.create_document(self.url, html_file=html_file)
+
+        self.drawer.create_document.assert_called_once_with(
+            document_id='https___domain.url_foo_bar?x=y',
+            path=self.url,
+            title='Title in file',
+            content='Content in file'
         )
 
     def test_update_document(self):
